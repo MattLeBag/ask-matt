@@ -2,20 +2,19 @@ import OpenAI from "openai";
 
 export default async function handler(req, res) {
   //
-  // ✅ CORS (Allow multiple origins, tolerant parsing, normalize origin)
+  // ✅ CORS (allow multiple origins, tolerant parsing, normalize origin)
   //
   const raw = process.env.ALLOWED_ORIGIN || "";
   const ALLOWED_ORIGINS = raw
-    .split(/[, \n\r]+/) // allow comma or newline/space separated
+    .split(/[, \n\r]+/)            // allow comma or newline/space separated
     .map(s => s.trim())
     .filter(Boolean)
-    .map(u => u.replace(/\/+$/, "")); // strip trailing slash from each allowed origin
+    .map(u => u.replace(/\/+$/, "")); // strip trailing slash
 
-  const origin = (req.headers.origin || "").replace(/\/+$/, ""); // normalize incoming origin
-  const isAllowed = ALLOWED_ORIGINS.length
-    ? ALLOWED_ORIGINS.includes(origin)
-    : true; // fallback if no list provided (dev convenience)
+  const origin = (req.headers.origin || "").replace(/\/+$/, "");
+  const isAllowed = ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.includes(origin) : true;
 
+  // helpful when debugging in Vercel logs
   console.log("CORS check:", { origin, ALLOWED_ORIGINS, isAllowed });
 
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -50,38 +49,29 @@ export default async function handler(req, res) {
     `;
 
     //
-    // ✅ Create response from OpenAI (using correct Responses API syntax)
+    // ✅ Create response (Responses API + file_search via attachments)
     //
-    const last = messages[messages.length - 1] || { role: "user", content: "" };
-
     const response = await client.responses.create({
       model: "gpt-4o-mini",
-      tools: [{ type: "file_search" }],
-      tool_resources: {
-        file_search: {
-          vector_store_ids: [VECTOR_STORE_ID],
-        },
-      },
       input: [
         { role: "system", content: systemPrompt },
+        messages[messages.length - 1], // last user turn
+      ],
+      tools: [{ type: "file_search" }],
+      attachments: [
         {
-          role: "user",
-          content: typeof last === "string" ? last : (last.content ?? ""),
+          // this is the correct place to pass your vector store for file_search
+          file_search: { vector_store_ids: [VECTOR_STORE_ID] },
         },
       ],
+      stream: false,
     });
 
-    //
-    // ✅ Return the output
-    //
     return res.status(200).json({
       answer: response.output_text ?? "Sorry, I couldn’t find that yet.",
     });
-
   } catch (e) {
-    // ✅ Improved error visibility
-    console.error("Server error:", e?.response?.data || e?.message || e);
-    const msg = e?.response?.data?.error?.message || e?.message || "Server error";
-    return res.status(500).json({ error: msg });
+    console.error("Server error:", e?.response?.data || e);
+    return res.status(500).json({ error: "Server error" });
   }
 }
