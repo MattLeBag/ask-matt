@@ -57,13 +57,13 @@ export default async function handler(req, res) {
         { role: "system", content: systemPrompt },
         { role: 'user', content: message} // last user turn
       ],
-      tools: [{ type: "file_search" }],
-      attachments: [
-        {
-          // this is the correct place to pass your vector store for file_search
-          file_search: { vector_store_ids: [VECTOR_STORE_ID] },
-        },
-      ],
+      tools: [{ type: "file_search", vector_store_ids: [VECTOR_STORE_ID] }],
+      // attachments: [
+      //   {
+      //     // this is the correct place to pass your vector store for file_search
+      //     file_search: { vector_store_ids: [VECTOR_STORE_ID] },
+      //   },
+      // ],
       stream: false,
     });
 
