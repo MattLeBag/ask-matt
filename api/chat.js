@@ -27,8 +27,8 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
   try {
-    const { messages } = req.body || {};
-    if (!messages?.length) {
+    const { message } = req.body || {};
+    if (!message?.length) {
       return res.status(400).json({ error: "messages required" });
     }
 
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       model: "gpt-4o-mini",
       input: [
         { role: "system", content: systemPrompt },
-        messages[messages.length - 1], // last user turn
+        { role: 'user', content: message} // last user turn
       ],
       tools: [{ type: "file_search" }],
       attachments: [
