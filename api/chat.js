@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     .map(u => u.replace(/\/+$/, "")); // strip trailing slash
 
   const origin = (req.headers.origin || "").replace(/\/+$/, "");
-  const isAllowed = ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*) : true;
+  const isAllowed = ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.includes('*') : true;
 
   // helpful when debugging in Vercel logs
   console.log("CORS check:", { origin, ALLOWED_ORIGINS, isAllowed });
